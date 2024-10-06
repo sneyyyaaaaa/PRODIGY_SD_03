@@ -1,0 +1,117 @@
+Sale Data Analysis of a Retail Store
+This analysis focuses on understanding sales patterns, customer behaviors, and overall performance metrics within a retail environment. By leveraging various analytical methods, we can derive actionable insights that can enhance sales strategies and improve profitability.
+
+Data Preparation
+1. Data Collection:
+Gather transaction data, including sales records, customer demographics, and product details.
+Ensure data integrity by checking for inconsistencies, missing values, and outliers.
+2. Data Cleaning:
+Clean the dataset to remove anomalies and merge transaction data with customer data for comprehensive analysis.
+
+import pandas as pd
+
+# Load data
+sales_data = pd.read_csv('sales_data.csv')  # Replace with your CSV file path
+
+# Display the first few rows of the dataset
+print(sales_data.head())
+
+# Check for missing values
+print(sales_data.isnull().sum())
+
+# Fill or drop missing values (example: dropping)
+sales_data.dropna(inplace=True)
+
+# Remove duplicates
+sales_data.drop_duplicates(inplace=True)
+
+2. Sales Metrics
+Total Revenue Calculation
+# Calculate total revenue
+sales_data['Total_Revenue'] = sales_data['Units_Sold'] * sales_data['Price_Per_Unit']
+
+# Display total revenue
+total_revenue = sales_data['Total_Revenue'].sum()
+print(f'Total Revenue: ${total_revenue:.2f}')
+
+
+Monthly Sales Growth Calculation
+# Convert date column to datetime format
+sales_data['Date'] = pd.to_datetime(sales_data['Date'])
+
+# Group by month and year to calculate monthly sales
+monthly_sales = sales_data.resample('M', on='Date').sum()
+
+# Calculate monthly growth
+monthly_sales['Monthly_Growth'] = monthly_sales['Total_Revenue'].pct_change() * 100
+
+print(monthly_sales[['Total_Revenue', 'Monthly_Growth']])
+
+Customer Segmentation
+# ABC Analysis
+sales_summary = sales_data.groupby('Product_ID')['Total_Revenue'].sum().reset_index()
+sales_summary = sales_summary.sort_values(by='Total_Revenue', ascending=False)
+
+# Calculate cumulative revenue percentage
+sales_summary['Cumulative_Revenue'] = sales_summary['Total_Revenue'].cumsum()
+total_revenue = sales_summary['Total_Revenue'].sum()
+sales_summary['Cumulative_Percentage'] = (sales_summary['Cumulative_Revenue'] / total_revenue) * 100
+
+# Classify into A, B, C categories
+def categorize(row):
+    if row['Cumulative_Percentage'] <= 80:
+        return 'A'
+    elif row['Cumulative_Percentage'] <= 95:
+        return 'B'
+    else:
+        return 'C'
+
+sales_summary['Category'] = sales_summary.apply(categorize, axis=1)
+
+print(sales_summary[['Product_ID', 'Total_Revenue', 'Category']])
+
+
+Demand Analysis
+# XYZ Analysis (Assuming you have a demand variability column)
+demand_variability = sales_data.groupby('Product_ID')['Units_Sold'].std().reset_index()
+demand_variability.columns = ['Product_ID', 'Demand_Variability']
+
+def categorize_demand(row):
+    if row['Demand_Variability'] < 5:  # Example threshold for X category
+        return 'X'
+    elif row['Demand_Variability'] < 15:  # Example threshold for Y category
+        return 'Y'
+    else:
+        return 'Z'
+
+demand_variability['Demand_Category'] = demand_variability.apply(categorize_demand, axis=1)
+
+print(demand_variability[['Product_ID', 'Demand_Variability', 'Demand_Category']])
+
+Visualization of Sales Performance
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# Plotting Monthly Sales Growth
+plt.figure(figsize=(12, 6))
+sns.lineplot(data=monthly_sales, x=monthly_sales.index, y='Monthly_Growth')
+plt.title('Monthly Sales Growth')
+plt.xlabel('Month')
+plt.ylabel('Growth (%)')
+plt.xticks(rotation=45)
+plt.grid()
+plt.show()
+
+# Plotting Top Products by Revenue
+top_products = sales_summary.head(10)
+plt.figure(figsize=(12, 6))
+sns.barplot(x='Total_Revenue', y='Product_ID', data=top_products)
+plt.title('Top 10 Products by Revenue')
+plt.xlabel('Revenue ($)')
+plt.ylabel('Product ID')
+plt.show()
+
+
+Conclusion
+These code snippets provide a comprehensive framework for performing sale data analysis in a retail environment. !
+
